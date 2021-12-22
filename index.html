@@ -15,7 +15,8 @@
     <script id="fragment-shader", type="x-shader/x-fragment", src="fragmentShader.glsl"></script>
     <script id='vertex-shader', type='x-shader/x-vertex', src="vertexShader.glsl"></script>
 
-<script src="lib/J3DIMath.js" type="text/javascript"></script>
+
+<!-- <script src="lib/J3DIMath.js" type="text/javascript"></script> -->
 
 
 <script>
@@ -104,6 +105,12 @@
 	    return date.getMinutes() * 60.0 + date.getSeconds() + date.getMilliseconds() / 1000.0;
     }
 
+    function getIdentityMatrix4f() {
+        let arr = new Float32Array(16);
+        arr[0] = arr[5] = arr[10] = arr[15] = 1.0;
+        return arr;
+    }
+
     function drawScene(gl, shaderProgram, buffer, numItems, itemSize, canvasId) {
 
         // viewport
@@ -114,7 +121,7 @@
 
         // clear screen
         gl.viewport(0, 0, width, height);
-        gl.clearColor(0.8, 0.9, 1.0, 1.0);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         // position
@@ -125,18 +132,17 @@
 
         // projectionMatrix
         let uProjectionMatrix = gl.getUniformLocation(shaderProgram, "projectionMatrix");
-        var perspectiveMatrix = new J3DIMatrix4();	
-        perspectiveMatrix.setUniform(gl, uProjectionMatrix, false);
+        gl.uniformMatrix4fv(uProjectionMatrix, false, getIdentityMatrix4f());
+
+        // there is no need for jedi library
 
         // modelViewMatrix
         let uModelviewMatrix = gl.getUniformLocation(shaderProgram, "modelViewMatrix");
-        var modelViewMatrix = new J3DIMatrix4();	
-        modelViewMatrix.setUniform(gl, uModelviewMatrix, false);
+        gl.uniformMatrix4fv(uModelviewMatrix, false, getIdentityMatrix4f());
 
         // time
         gl.uniform1f(gl.getUniformLocation(shaderProgram, "time"), getTime());
         
-
         // draw scene
         console.log('drawing');
         gl.drawArrays(gl.TRIANGLES, 0, numItems);
@@ -164,9 +170,9 @@
 
         Promise.all(shaderIdAndType.map(node => 
             getSourceCode(node.id)
-                .then(code => {
+                .then(sourceCode => {
                     return {
-                        'code': code,
+                        'code': sourceCode,
                         'type': node.type
                     }
                 })
