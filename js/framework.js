@@ -38,6 +38,9 @@ function _initShaderProgram(gl, shaderInfos) {
 
 function _initGL(canvasId) {
     let canvas = document.getElementById(canvasId);
+    if (canvas == null) {
+        console.log(`Error: canvas not found for gl, given id=${canvasId}`);
+    }
     let gl = canvas.getContext('webgl');
 
     if (!gl) {
@@ -66,6 +69,9 @@ function _initScreenBuffer(gl) {
 
 function _getSourceCode(id) {
     let node = document.getElementById(id);
+    if (node == null) {
+        console.log(`Error: did not find source code with id: ${id}`);
+    }
 
     if (node.src) {
         return fetch(node.src).then(res => res.text());
