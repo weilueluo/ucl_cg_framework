@@ -1,187 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGL Test</title>
+    <title>CG Framework Test</title>
 </head>
+
 <body>
 
     <canvas id="glCanvas" width="800" height="400">
-        Your browser doesn't support canvas D:
+      Your browser doesn't support canvas D:
     </canvas>
 
-    <script id="fragment-shader", type="x-shader/x-fragment", src="fragmentShader.glsl"></script>
-    <script id='vertex-shader', type='x-shader/x-vertex', src="vertexShader.glsl"></script>
+    <script id="fragment-shader" , type="x-shader/x-fragment" , src="fragmentShader.glsl"></script>
+    <script id='vertex-shader' , type="x-shader/x-vertex" , src="vertexShader.glsl"></script>
+    <script id="tonemap-shader" , type="x-shader/x-fragment" , src="tonemapShader.glsl"></script>
 
+    <script type="text/javascript" src="js/framework.js"></script>
 
-<!-- <script src="lib/J3DIMath.js" type="text/javascript"></script> -->
+    <script>
+        window.addEventListener('load', () => {
+            let framework = new Framework(
+                canvasId = 'glCanvas',
+                vertexShaderId = 'vertex-shader',
+                fragmentShaderId = 'fragment-shader',
+                isPathTracer = true,
+                tonemapShaderId = 'tonemap-shader'
+            );
 
+            framework.setFrameCallback(() => {
+                console.log(framework.getCurrentFrame());
+            });
 
-<script>
+            framework.initialize().then(() => framework.start(maxFrame = 1000));
 
-    function getSourceCode(id) {
-        let node = document.getElementById(id);
+            setTimeout(() => {
+                framework.stop();
+            }, 1000);
 
-        if (node.src) {
-            return fetch(node.src).then(res => res.text());
-        } else {
-            return Promise.resolve(node.innerHTML);
-        }
-    }
-
-    function compileShader(gl, type, shaderCode) {
-        let shader = gl.createShader(type);
-
-        gl.shaderSource(shader, shaderCode);
-        gl.compileShader(shader);
-
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.log(`Error while compiling shader, type=${type}, log=${gl.getShaderInfoLog(shader)}`);
-            return null;
-        } else {
-            return shader;
-        }
-    }
-
-    function initShaders(gl, shaderInfos) {
-        let shaderProgram = gl.createProgram();
-
-        shaderInfos.forEach(info => {
-            let shader = compileShader(gl, info.type, info.code);
-            if (shader) {
-                gl.attachShader(shaderProgram, shader);
-            }
+            setTimeout(() => {
+                framework.continue();
+            }, 3000);
         });
+    </script>
 
-        gl.linkProgram(shaderProgram);
-
-        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            console.log('Error linking shader program');
-            console.log(gl.getProgramInfoLog(shaderProgram));
-        }
-
-        gl.useProgram(shaderProgram);
-        return shaderProgram;
-    }
-
-    function initGL(canvasId) {
-        let canvas = document.getElementById(canvasId);
-        let gl = canvas.getContext('webgl');
-        
-        if (!gl) {
-            console.log(`Could not initialize gl context from canvas id ${canvasId}`);
-            return null;
-        } else {
-            return gl;
-        }
-    }
-
-    function initBuffers(gl) {
-        let screenVerticesBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, screenVerticesBuffer);
-
-        let vertices = [
-            -1,  -1,  0,
-            -1,  1,  0,
-            1,  1,  0,
-
-            -1,  -1,  0,
-            1,  -1,  0,
-            1,  1,  0,
-        ];
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-        return {
-            'itemSize': 3,
-            'numItems': 3 * 2,
-            'buffer': screenVerticesBuffer
-        };
-    }
-
-    function getTime() {
-        let date = new Date();
-	    return date.getMinutes() * 60.0 + date.getSeconds() + date.getMilliseconds() / 1000.0;
-    }
-
-    function getIdentityMatrix4f() {
-        let arr = new Float32Array(16);
-        arr[0] = arr[5] = arr[10] = arr[15] = 1.0;
-        return arr;
-    }
-
-    function drawScene(gl, shaderProgram, buffer, numItems, itemSize, canvasId) {
-
-        // viewport
-        let canvas = document.getElementById(canvasId);
-        let width = canvas.width;
-        let height = canvas.height;
-        gl.uniform2iv(gl.getUniformLocation(shaderProgram, "viewport"), [width, height]);
-
-        // clear screen
-        gl.viewport(0, 0, width, height);
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        // position
-        let aPosition = gl.getAttribLocation(shaderProgram, "position");
-        gl.enableVertexAttribArray(aPosition);
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.vertexAttribPointer(aPosition, itemSize, gl.FLOAT, false, 0, 0);
-
-        // projectionMatrix
-        let uProjectionMatrix = gl.getUniformLocation(shaderProgram, "projectionMatrix");
-        gl.uniformMatrix4fv(uProjectionMatrix, false, getIdentityMatrix4f());
-
-        // there is no need for jedi library
-
-        // modelViewMatrix
-        let uModelviewMatrix = gl.getUniformLocation(shaderProgram, "modelViewMatrix");
-        gl.uniformMatrix4fv(uModelviewMatrix, false, getIdentityMatrix4f());
-
-        // time
-        gl.uniform1f(gl.getUniformLocation(shaderProgram, "time"), getTime());
-        
-        // draw scene
-        console.log('drawing');
-        gl.drawArrays(gl.TRIANGLES, 0, numItems);
-
-        // window.requestAnimationFrame(() => {
-        //     drawScene(gl, shaderProgram, buffer, numItems, itemSize, canvasId);
-        // });
-    }
-
-    window.addEventListener('load', () => {
-        const glCanvasId = 'glCanvas';
-        let gl = initGL(glCanvasId);
-        let bufferInfo = initBuffers(gl);
-
-        let shaderIdAndType = [
-            {
-                'id': 'vertex-shader',
-                'type': gl.VERTEX_SHADER
-            },
-            {
-                'id': 'fragment-shader',
-                'type': gl.FRAGMENT_SHADER
-            }
-        ];
-
-        Promise.all(shaderIdAndType.map(node => 
-            getSourceCode(node.id)
-                .then(sourceCode => {
-                    return {
-                        'code': sourceCode,
-                        'type': node.type
-                    }
-                })
-        ))
-        .then(shaderCodeAndType => initShaders(gl, shaderCodeAndType))
-        .then(shaderProgram => drawScene(gl, shaderProgram, bufferInfo.buffer, bufferInfo.numItems, bufferInfo.itemSize, glCanvasId));
-    });
-
-</script>
-    
 </body>
+
 </html>
