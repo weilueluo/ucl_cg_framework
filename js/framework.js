@@ -168,11 +168,19 @@ async function _initPathTracer(gl, canvasId, screenBuffer, vertexShaderId, tonem
     }
 }
 
-function _drawCanvas(gl, canvasId, time, shaderProgram) {
+function _drawCanvas(gl, canvasId, time, shaderProgram, screenBuffer) {
 
     let canvas = document.getElementById(canvasId);
     let width = canvas.width;
     let height = canvas.height;
+
+    // vertex shader input
+    let aPosition = gl.getAttribLocation(shaderProgram, "position");
+    gl.enableVertexAttribArray(aPosition);
+    gl.bindBuffer(gl.ARRAY_BUFFER, screenBuffer);
+    gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+
+    // fragment shader input
 
     // viewport
     gl.viewport(0, 0, width, height);
@@ -369,7 +377,7 @@ class Framework {
         if (this.isPathTracer) {
             _drawPathTracerCanvas(this.gl, this.canvasId, this.rttFramebuffer, this.rttTexture, this.shaderProgram, this.copyProgram, this.getCurrentFrame());
         } else {
-            _drawCanvas(this.gl, this.canvasId, _getTime(), this.shaderProgram)
+            _drawCanvas(this.gl, this.canvasId, _getTime(), this.shaderProgram, this.screenBuffer)
         }
     }
 }
