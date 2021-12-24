@@ -3,6 +3,8 @@
 function _compileShader(gl, type, shaderCode) {
     let shader = gl.createShader(type);
 
+    // console.log(shaderCode);
+
     gl.shaderSource(shader, shaderCode);
     gl.compileShader(shader);
 
@@ -80,23 +82,26 @@ function _getSourceCode(id) {
     }
 }
 
-function _findShaderScripts(gl, vertexShaderId, fragmentShaderId) {
+function _findShaderScripts(gl, vertexShaderId, fragmentShaderId, customFragmentShaderCode = '') {
 
-    let idAndTypes = [
-        { 'id': vertexShaderId, 'type': gl.VERTEX_SHADER },
-        { 'id': fragmentShaderId, 'type': gl.FRAGMENT_SHADER },
+    return [
+        _getSourceCode(vertexShaderId).then(code => {
+            return {
+                'type': gl.VERTEX_SHADER,
+                'code': code
+            }
+        }),
+        _getSourceCode(fragmentShaderId).then(code => {
+            return {
+                'type': gl.FRAGMENT_SHADER,
+                'code': customFragmentShaderCode + code
+            }
+        }),
     ];
-
-    return idAndTypes.map(idAndType => _getSourceCode(idAndType.id).then(code => {
-        return {
-            'code': code,
-            'type': idAndType.type
-        }
-    }));
 }
 
-async function _initShaders(gl, vertexShaderId, fragmentShaderId) {
-    shaderScripts = await Promise.all(_findShaderScripts(gl, vertexShaderId, fragmentShaderId));
+async function _initShaders(gl, vertexShaderId, fragmentShaderId, customFragmentShaderCode = '') {
+    shaderScripts = await Promise.all(_findShaderScripts(gl, vertexShaderId, fragmentShaderId, customFragmentShaderCode));
     shaderProgram = _initShaderProgram(gl, shaderScripts);
 
     // set static input to shader program
@@ -257,10 +262,50 @@ function _getIdentityMatrix4f() {
     return arr;
 }
 
+function _activeSolutionsToCode(solutions) {
+    let code = ''
+    for (let solution of solutions) {
+        switch (String(solution)) {
+            // cwk 1
+            case 'SOLUTION_FRESNEL': code += '#define SOLUTION_FRESNEL\n';
+            case 'SOLUTION_REFLECTION_REFRACTION': code += '#define SOLUTION_REFLECTION_REFRACTION\n'; 
+            case 'SOLUTION_SHADOW': code += '#define SOLUTION_SHADOW\n';
+            case 'SOLUTION_CYLINDER_AND_PLANE': code += '#define SOLUTION_CYLINDER_AND_PLANE\n';
+            break;
+            // cwk 2
+            case 'SOLUTION_AALIAS': code += '#define SOLUTION_AALIAS\n';    
+            case 'SOLUTION_ZBUFFERING': code += '#define SOLUTION_ZBUFFERING\n';
+            case 'SOLUTION_INTERPOLATION': code += '#define SOLUTION_INTERPOLATION\n';
+            case 'SOLUTION_CLIPPING': code += '#define SOLUTION_CLIPPING\n';
+            case 'SOLUTION_RASTERIZATION': code += '#define SOLUTION_RASTERIZATION\n';
+            case 'SOLUTION_PROJECTION': code += '#define SOLUTION_PROJECTION\n';
+            break;
+            // cwk 3
+            case 'SOLUTION_MIS': code += '#define LIGHT_INTENSITY_WEIGHTED\n'; 
+            case 'SOLUTION_IS': code += '#define SOLUTION_IS\n';
+            case 'SOLUTION_AA': code += '#define SOLUTION_AA\n';
+            case 'SOLUTION_HALTON': code += '#define SOLUTION_HALTON\n';
+            case 'SOLUTION_THROUGHPUT': code += '#define SOLUTION_THROUGHPUT\n';
+            case 'SOLUTION_BOUNCE': code += '#define SOLUTION_BOUNCE\n';
+            case 'SOLUTION_LIGHT': code += '#define SOLUTION_LIGHT\n';
+            break;
+            // cwk 3 custom
+            case 'CHANGE_LIGHT_POSITION': code += '#define CHANGE_LIGHT_POSITION\n'; 
+            break;
+            case 'CHANGE_LIGHT_INTENSITY': code += '#define CHANGE_LIGHT_INTENSITY\n'; 
+            break;
+
+            default: console.log(`Provided solution is not one of available options: ${solution}`);
+            break;
+        }
+    }
+    return code;
+}
+
 // main class
 
 class Framework {
-    constructor(canvasId, vertexShaderId = 'vertex-shader', fragmentShaderId = 'fragment-shader', isPathTracer = false, tonemapShaderId = null, frameCallback = null) {
+    constructor(canvasId, vertexShaderId = 'vertex-shader', fragmentShaderId = 'fragment-shader', isPathTracer = false, tonemapShaderId = null) {
 
         this.canvasId = canvasId;
         this.vertexShaderId = vertexShaderId;
@@ -282,7 +327,10 @@ class Framework {
 
         // interaction
         this.running = false;
-        this.frameCallback = frameCallback;
+        this.frameCallback = null;
+
+        // for custom solution input
+        this.activeSolutions = new Set();
     }
 
     async _initializePathTracer() {
@@ -314,7 +362,10 @@ class Framework {
     }
 
     async _resetShaders() {
-        this.shaderProgram = await _initShaders(this.gl, this.vertexShaderId, this.fragmentShaderId);
+
+        let customFragmentShaderCode = _activeSolutionsToCode(this.activeSolutions);
+
+        this.shaderProgram = await _initShaders(this.gl, this.vertexShaderId, this.fragmentShaderId, customFragmentShaderCode);
     }
 
     //
@@ -358,6 +409,14 @@ class Framework {
         this.frameCallback = callback;
     }
 
+    addSolution(solution) {
+        this.activeSolutions.add(solution);
+    }
+
+    removeSolution(solution) {
+        this.activeSolutions.delete(solution);
+    }
+
     async initialize() {
         this._resetGL();
         this._resetBuffer();
@@ -377,7 +436,7 @@ class Framework {
         if (this.isPathTracer) {
             _drawPathTracerCanvas(this.gl, this.canvasId, this.rttFramebuffer, this.rttTexture, this.shaderProgram, this.copyProgram, this.getCurrentFrame());
         } else {
-            _drawCanvas(this.gl, this.canvasId, _getTime(), this.shaderProgram, this.screenBuffer)
+            _drawCanvas(this.gl, this.canvasId, _getTime(), this.shaderProgram, this.screenBuffer);
         }
     }
 }

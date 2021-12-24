@@ -1,8 +1,9 @@
-#define SOLUTION_CYLINDER_AND_PLANE
-#define SOLUTION_SHADOW
-#define SOLUTION_REFLECTION_REFRACTION
-#define SOLUTION_FRESNEL
-//#define SOLUTION_BLOB
+
+// #define SOLUTION_CYLINDER_AND_PLANE
+// #define SOLUTION_SHADOW
+// #define SOLUTION_REFLECTION_REFRACTION
+// #define SOLUTION_FRESNEL
+// #define SOLUTION_BLOB
 
 precision highp float;
 uniform ivec2 viewport; 
@@ -471,10 +472,10 @@ vec3 colorForFragment(const Scene scene, const vec2 fragCoord) {
 #ifdef SOLUTION_REFLECTION_REFRACTION
 		nextRay.origin = currentHitInfo.position;
 		reflect(currentRay, currentHitInfo, nextRay.direction);
+		currentIOR = currentHitInfo.material.refractionIndex;
 #else
 #endif
       currentRay = nextRay;
-	  currentIOR = currentHitInfo.material.refractionIndex;
       
       currentHitInfo = intersectScene(scene, currentRay, 0.001, 10000.0);    
             

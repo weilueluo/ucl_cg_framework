@@ -1,9 +1,9 @@
-#define SOLUTION_LIGHT
-#define SOLUTION_BOUNCE
-#define SOLUTION_THROUGHPUT
-#define SOLUTION_HALTON
-#define SOLUTION_AA
-#define SOLUTION_IS 
+// #define SOLUTION_LIGHT
+// #define SOLUTION_BOUNCE
+// #define SOLUTION_THROUGHPUT
+// #define SOLUTION_HALTON
+// #define SOLUTION_AA
+// #define SOLUTION_IS 
 
 // this is a flag to turn on unit test
 // the pixels on screen should converge to (0.5, 0.5, 0.5), which is a gray color
@@ -17,7 +17,7 @@
 // for enabling direct light sampling (light intensity/emissiveness weighted in pdf) importance sampling
 // this method is extended to multiple light sources and verified if spheres has very different positions,
 // you can use the flags below to test it.
-#define LIGHT_INTENSITY_WEIGHTED
+// #define LIGHT_INTENSITY_WEIGHTED
 
 // uncomment to return the direction of the first iteration sample instead.
 // use this to test if the direct light sampling importance sampling is really doing the correct thing
