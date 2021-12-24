@@ -323,7 +323,7 @@ class Framework {
         this.rttTexture = null;
         this.copyProgram = null;
         this.currentFrame = 0;
-        this.maxFrame = 0;
+        this.maxFrame = 1;
 
         // interaction
         this.running = false;
@@ -391,8 +391,8 @@ class Framework {
 
     restart() {
         this.stop();
-        this.setCurrentFrame(0);
-        this.initialize().then(this.start(this.getMaxFrame()));
+        let maxFrame = this.getMaxFrame();
+        this.initialize().then(() => this.start(maxFrame));
     }
 
     getCurrentFrame() {
