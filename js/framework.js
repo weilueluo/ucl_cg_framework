@@ -389,6 +389,12 @@ class Framework {
         this._run();
     }
 
+    restart() {
+        this.stop();
+        this.setCurrentFrame(0);
+        this.initialize().then(this.start(this.getMaxFrame()));
+    }
+
     getCurrentFrame() {
         return this.currentFrame;
     }
