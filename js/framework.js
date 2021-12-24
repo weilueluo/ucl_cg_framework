@@ -418,6 +418,22 @@ class Framework {
         this.activeSolutions.add(solution);
     }
 
+    hasSolution(solution) {
+        return this.activeSolutions.has(solution);
+    }
+
+    clearSolutions() {
+        this.activeSolutions.clear();
+    }
+
+    toggleSolution(solution) {
+        if (this.hasSolution(solution)) {
+            this.removeSolution(solution);
+        } else {
+            this.addSolution(solution);
+        }
+    }
+
     removeSolution(solution) {
         this.activeSolutions.delete(solution);
     }
