@@ -391,8 +391,7 @@ class Framework {
 
     restart() {
         this.stop();
-        let maxFrame = this.getMaxFrame();
-        this.initialize().then(() => this.start(maxFrame));
+        this.initialize().then(() => this.start(this.getMaxFrame()));
     }
 
     getCurrentFrame() {
@@ -430,8 +429,6 @@ class Framework {
 
         this.gl.clearColor(0.5, 0.5, 0.5, 1.0); // default gray background
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-        this.currentFrame = 0;
-        this.maxFrame = 0;
 
         if (this.isPathTracer) {
             await this._initializePathTracer();
